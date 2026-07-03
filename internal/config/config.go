@@ -38,12 +38,10 @@ func Read() Config {
 	return readConfig
 }
 
-func SetUser(userName string) error {
-	overwrittenConfig := Read()
+func (cfg *Config) SetUser(userName string) error {
+	cfg.CurrentUserName = userName
 
-	overwrittenConfig.CurrentUserName = userName
-
-	err := write(overwrittenConfig)
+	err := write(*cfg)
 
 	return err
 }
