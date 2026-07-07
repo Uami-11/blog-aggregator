@@ -52,6 +52,24 @@ func HandlerReset(s *State, comm Command) error {
 	return nil
 }
 
+func HandlerUsers(s *State, comm Command) error {
+	users, err := s.DB.GetUsers(context.Background())
+	if err != nil {
+		return err
+	}
+
+	for _, user := range users {
+		fmt.Printf("• %s", user)
+		if user == s.TheConfig.CurrentUserName {
+			fmt.Print(" (current)")
+		}
+
+		fmt.Println()
+	}
+
+	return nil
+}
+
 func HandlerRegister(s *State, comm Command) error {
 	if len(comm.Args) == 0 {
 		return errors.New("registration information should contain a username argument")

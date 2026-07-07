@@ -19,4 +19,4 @@ TRUNCATE TABLE users;
 
 -- name: GetUsers :many
 
-SELECT name FROM users
+SELECT name FROM users;
