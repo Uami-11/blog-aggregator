@@ -43,6 +43,15 @@ func HandlerLogin(s *State, comm Command) error {
 	return nil
 }
 
+func HandlerReset(s *State, comm Command) error {
+	err := s.DB.DeleteUsers(context.Background())
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func HandlerRegister(s *State, comm Command) error {
 	if len(comm.Args) == 0 {
 		return errors.New("registration information should contain a username argument")

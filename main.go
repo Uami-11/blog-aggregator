@@ -34,6 +34,7 @@ func main() {
 
 	comms.Register("login", cmd.HandlerLogin)
 	comms.Register("register", cmd.HandlerRegister)
+	comms.Register("reset", cmd.HandlerReset)
 
 	if len(os.Args) < 2 {
 		fmt.Println("no command given")
