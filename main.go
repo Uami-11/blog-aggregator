@@ -1,11 +1,14 @@
 package main
 
 import (
+	"database/sql"
 	"fmt"
 	"os"
 
 	"github.com/Uami-11/blog-aggregator/cmd"
 	"github.com/Uami-11/blog-aggregator/internal/config"
+	"github.com/Uami-11/blog-aggregator/internal/database"
+	_ "github.com/lib/pq"
 )
 
 func main() {
@@ -15,11 +18,22 @@ func main() {
 
 	stateConfig.TheConfig = &currentConfig
 
+	db, err := sql.Open("postgres", stateConfig.TheConfig.DBURL)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "db connection: %v", err)
+		os.Exit(1)
+	}
+
+	dbQueries := database.New(db)
+
+	stateConfig.DB = dbQueries
+
 	var comms cmd.Commands
 
 	comms.Comms = make(map[string]func(*cmd.State, cmd.Command) error)
 
 	comms.Register("login", cmd.HandlerLogin)
+	comms.Register("register", cmd.HandlerRegister)
 
 	if len(os.Args) < 2 {
 		fmt.Println("no command given")
@@ -36,7 +50,7 @@ func main() {
 	fmt.Println(stateConfig.TheConfig.CurrentUserName)
 	fmt.Println(stateConfig.TheConfig.DBURL)
 
-	err := comms.Run(&stateConfig, comm)
+	err = comms.Run(&stateConfig, comm)
 	if err != nil {
 		fmt.Printf("command error: %v", err)
 		fmt.Println("")

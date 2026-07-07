@@ -2,10 +2,15 @@
 package cmd
 
 import (
+	"context"
+	"database/sql"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/Uami-11/blog-aggregator/internal/config"
+	"github.com/Uami-11/blog-aggregator/internal/database"
+	"github.com/google/uuid"
 )
 
 type Command struct {
@@ -14,6 +19,7 @@ type Command struct {
 }
 
 type State struct {
+	DB        *database.Queries
 	TheConfig *config.Config
 }
 
@@ -22,12 +28,55 @@ func HandlerLogin(s *State, comm Command) error {
 		return errors.New("the login information should contain a username argument")
 	}
 
-	err := s.TheConfig.SetUser(comm.Args[0])
+	user, err := s.DB.GetUser(context.Background(), comm.Args[0])
+	if err != nil {
+		return errors.New("user does not exist")
+	}
+
+	err = s.TheConfig.SetUser(user.Name)
 	if err != nil {
 		return err
 	}
 
 	fmt.Println("User successfully logged in!")
+
+	return nil
+}
+
+func HandlerRegister(s *State, comm Command) error {
+	if len(comm.Args) == 0 {
+		return errors.New("registration information should contain a username argument")
+	}
+
+	var user database.CreateUserParams
+
+	user.ID = uuid.New()
+
+	currentTime := sql.NullTime{
+		Time:  time.Now(),
+		Valid: true,
+	}
+
+	user.CreatedAt = currentTime
+	user.UpdatedAt = currentTime
+
+	if _, err := s.DB.GetUser(context.Background(), comm.Args[0]); err == nil {
+		return errors.New("that user already exists")
+	}
+
+	user.Name = comm.Args[0]
+
+	_, err := s.DB.CreateUser(context.Background(), user)
+	if err != nil {
+		return errors.New("error creating user")
+	}
+
+	s.TheConfig.CurrentUserName = user.Name
+
+	fmt.Printf("user %s has been created!\n", user.Name)
+	fmt.Printf("UUID: %s\n", user.ID)
+	fmt.Printf("Created At: %v\n", user.CreatedAt)
+	fmt.Printf("Updated At: %v\n", user.UpdatedAt)
 
 	return nil
 }
