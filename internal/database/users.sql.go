@@ -13,15 +13,10 @@ import (
 )
 
 const createUser = `-- name: CreateUser :one
-
 INSERT INTO users (id, created_at, updated_at, name)
-VALUES (
-    $1,
-    $2,
-    $3,
-    $4
-)
-RETURNING id, created_at, updated_at, name
+    VALUES ($1, $2, $3, $4)
+RETURNING
+    id, created_at, updated_at, name
 `
 
 type CreateUserParams struct {
@@ -49,8 +44,7 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 }
 
 const deleteUsers = `-- name: DeleteUsers :exec
-
-TRUNCATE TABLE users
+TRUNCATE TABLE users CASCADE
 `
 
 func (q *Queries) DeleteUsers(ctx context.Context) error {
@@ -59,8 +53,12 @@ func (q *Queries) DeleteUsers(ctx context.Context) error {
 }
 
 const getUser = `-- name: GetUser :one
-
-SELECT id, created_at, updated_at, name FROM users WHERE name=$1
+SELECT
+    id, created_at, updated_at, name
+FROM
+    users
+WHERE
+    name = $1
 `
 
 func (q *Queries) GetUser(ctx context.Context, name string) (User, error) {
@@ -76,8 +74,10 @@ func (q *Queries) GetUser(ctx context.Context, name string) (User, error) {
 }
 
 const getUsers = `-- name: GetUsers :many
-
-SELECT name FROM users
+SELECT
+    name
+FROM
+    users
 `
 
 func (q *Queries) GetUsers(ctx context.Context) ([]string, error) {
