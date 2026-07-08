@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/Uami-11/blog-aggregator/article"
 	"github.com/Uami-11/blog-aggregator/internal/config"
 	"github.com/Uami-11/blog-aggregator/internal/database"
 	"github.com/google/uuid"
@@ -47,6 +48,23 @@ func HandlerReset(s *State, comm Command) error {
 	err := s.DB.DeleteUsers(context.Background())
 	if err != nil {
 		return err
+	}
+
+	return nil
+}
+
+func HandlerAgg(s *State, comm Command) error {
+	feed, err := article.FetchFeed(context.Background(), "https://www.wagslane.dev/index.xml")
+	if err != nil {
+		return err
+	}
+
+	fmt.Println("Title: ", feed.Channel.Title)
+	fmt.Println("Link: ", feed.Channel.Link)
+	fmt.Println("Description: ", feed.Channel.Description)
+	fmt.Println("Items:")
+	for _, item := range feed.Channel.Item {
+		fmt.Println(item)
 	}
 
 	return nil
