@@ -88,6 +88,40 @@ func HandlerUsers(s *State, comm Command) error {
 	return nil
 }
 
+func HandlerAddFeed(s *State, comm Command) error {
+	if len(comm.Args) < 2 {
+		return errors.New("feed needs two arguments: name and url")
+	}
+
+	var feeds database.CreateFeedParams
+
+	feeds.ID = uuid.New()
+	feeds.Name = comm.Args[0]
+	feeds.Url = comm.Args[1]
+
+	currentTime := sql.NullTime{
+		Time:  time.Now(),
+		Valid: true,
+	}
+
+	feeds.CreatedAt = currentTime
+	feeds.UpdatedAt = currentTime
+
+	user, err := s.DB.GetUser(context.Background(), s.TheConfig.CurrentUserName)
+	if err != nil {
+		return errors.New("you are not logged in, can not create feed")
+	}
+
+	feeds.UserID = user.ID
+
+	_, err = s.DB.CreateFeed(context.Background(), feeds)
+	if err != nil {
+		return errors.New("error in creating feed")
+	}
+
+	return nil
+}
+
 func HandlerRegister(s *State, comm Command) error {
 	if len(comm.Args) == 0 {
 		return errors.New("registration information should contain a username argument")
