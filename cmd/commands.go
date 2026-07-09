@@ -122,6 +122,26 @@ func HandlerAddFeed(s *State, comm Command) error {
 	return nil
 }
 
+func HandlerFeeds(s *State, comm Command) error {
+	feeds, err := s.DB.GetFeeds(context.Background())
+	if err != nil {
+		return err
+	}
+
+	for _, feed := range feeds {
+		user, err := s.DB.GetFeedUser(context.Background(), feed.ID)
+		if err != nil {
+			return err
+		}
+
+		fmt.Printf("Name: %s\n", feed.Name)
+		fmt.Printf("URL: %s\n", feed.Url)
+		fmt.Printf("By: %s\n", user)
+	}
+
+	return nil
+}
+
 func HandlerRegister(s *State, comm Command) error {
 	if len(comm.Args) == 0 {
 		return errors.New("registration information should contain a username argument")

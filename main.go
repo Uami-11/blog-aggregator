@@ -38,6 +38,7 @@ func main() {
 	comms.Register("users", cmd.HandlerUsers)
 	comms.Register("agg", cmd.HandlerAgg)
 	comms.Register("addfeed", cmd.HandlerAddFeed)
+	comms.Register("feeds", cmd.HandlerFeeds)
 
 	if len(os.Args) < 2 {
 		fmt.Println("no command given")
@@ -50,10 +51,7 @@ func main() {
 	comm.Name = os.Args[1]
 	comm.Args = os.Args[2:]
 
-	fmt.Println("Current:")
-	fmt.Println(stateConfig.TheConfig.CurrentUserName)
-	fmt.Println(stateConfig.TheConfig.DBURL)
-
+	fmt.Printf("Running command %s:\n", comm.Name)
 	err = comms.Run(&stateConfig, comm)
 	if err != nil {
 		fmt.Printf("command error: %v", err)
@@ -63,8 +61,4 @@ func main() {
 
 	currentConfig = config.Read()
 	stateConfig.TheConfig = &currentConfig
-
-	fmt.Println("Now:")
-	fmt.Println(stateConfig.TheConfig.CurrentUserName)
-	fmt.Println(stateConfig.TheConfig.DBURL)
 }
