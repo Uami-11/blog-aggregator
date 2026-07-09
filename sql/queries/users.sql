@@ -20,4 +20,3 @@ SELECT
     name
 FROM
     users;
-
