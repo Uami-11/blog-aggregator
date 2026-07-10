@@ -142,6 +142,45 @@ func HandlerFeeds(s *State, comm Command) error {
 	return nil
 }
 
+func HandlerFollow(s *State, comm Command) error {
+	if len(comm.Args) == 0 {
+		return errors.New("follow command needs a url argument")
+	}
+
+	feedID, err := s.DB.FindFeedURL(context.Background(), comm.Args[0])
+	if err != nil {
+		return err
+	}
+
+	user, err := s.DB.GetUser(context.Background(), s.TheConfig.CurrentUserName)
+	if err != nil {
+		return err
+	}
+
+	var feedFollow database.CreateFeedFollowParams
+
+	feedFollow.ID = uuid.New()
+
+	currentTime := sql.NullTime{
+		Time:  time.Now(),
+		Valid: true,
+	}
+
+	feedFollow.CreatedAt = currentTime
+	feedFollow.UpdatedAt = currentTime
+	feedFollow.FeedID = feedID
+	feedFollow.UserID = user.ID
+
+	feedFollowInfo, err := s.DB.CreateFeedFollow(context.Background(), feedFollow)
+	if err != nil {
+		return err
+	}
+
+	fmt.Printf("%s followed the %s feed\n", feedFollowInfo[0].UserName, feedFollowInfo[0].FeedName)
+
+	return nil
+}
+
 func HandlerRegister(s *State, comm Command) error {
 	if len(comm.Args) == 0 {
 		return errors.New("registration information should contain a username argument")
