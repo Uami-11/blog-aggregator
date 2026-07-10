@@ -119,6 +119,13 @@ func HandlerAddFeed(s *State, comm Command) error {
 		return errors.New("error in creating feed")
 	}
 
+	feedFollow := createFeedFollow(feeds.ID, user.ID)
+
+	_, err = s.DB.CreateFeedFollow(context.Background(), feedFollow)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
