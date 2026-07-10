@@ -120,6 +120,17 @@ func (q *Queries) CreateFeedFollow(ctx context.Context, arg CreateFeedFollowPara
 	return items, nil
 }
 
+const findFeedURL = `-- name: FindFeedURL :one
+SELECT id FROM feeds WHERE url = $1
+`
+
+func (q *Queries) FindFeedURL(ctx context.Context, url string) (uuid.UUID, error) {
+	row := q.db.QueryRowContext(ctx, findFeedURL, url)
+	var id uuid.UUID
+	err := row.Scan(&id)
+	return id, err
+}
+
 const getFeedUser = `-- name: GetFeedUser :one
 SELECT u.name FROM feeds f
 JOIN users u ON u.id = f.user_id
