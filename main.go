@@ -40,6 +40,7 @@ func main() {
 	comms.Register("addfeed", cmd.HandlerAddFeed)
 	comms.Register("feeds", cmd.HandlerFeeds)
 	comms.Register("follow", cmd.HandlerFollow)
+	comms.Register("following", cmd.HandlerFollowing)
 
 	if len(os.Args) < 2 {
 		fmt.Println("no command given")

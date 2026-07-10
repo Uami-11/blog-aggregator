@@ -181,6 +181,25 @@ func HandlerFollow(s *State, comm Command) error {
 	return nil
 }
 
+func HandlerFollowing(s *State, comm Command) error {
+	user, err := s.DB.GetUser(context.Background(), s.TheConfig.CurrentUserName)
+	if err != nil {
+		return err
+	}
+
+	feedsFollowed, err := s.DB.GetFeedFollowsForUser(context.Background(), user.ID)
+	if err != nil {
+		return err
+	}
+
+	fmt.Printf("%s follows these feeds:\n", user.Name)
+	for _, feed := range feedsFollowed {
+		fmt.Println(feed.FeedName)
+	}
+
+	return nil
+}
+
 func HandlerRegister(s *State, comm Command) error {
 	if len(comm.Args) == 0 {
 		return errors.New("registration information should contain a username argument")
