@@ -142,6 +142,24 @@ func HandlerFeeds(s *State, comm Command) error {
 	return nil
 }
 
+func createFeedFollow(feedID, userID uuid.UUID) database.CreateFeedFollowParams {
+	var feedFollow database.CreateFeedFollowParams
+
+	feedFollow.ID = uuid.New()
+
+	currentTime := sql.NullTime{
+		Time:  time.Now(),
+		Valid: true,
+	}
+
+	feedFollow.CreatedAt = currentTime
+	feedFollow.UpdatedAt = currentTime
+	feedFollow.FeedID = feedID
+	feedFollow.UserID = userID
+
+	return feedFollow
+}
+
 func HandlerFollow(s *State, comm Command) error {
 	if len(comm.Args) == 0 {
 		return errors.New("follow command needs a url argument")
@@ -157,19 +175,7 @@ func HandlerFollow(s *State, comm Command) error {
 		return err
 	}
 
-	var feedFollow database.CreateFeedFollowParams
-
-	feedFollow.ID = uuid.New()
-
-	currentTime := sql.NullTime{
-		Time:  time.Now(),
-		Valid: true,
-	}
-
-	feedFollow.CreatedAt = currentTime
-	feedFollow.UpdatedAt = currentTime
-	feedFollow.FeedID = feedID
-	feedFollow.UserID = user.ID
+	feedFollow := createFeedFollow(feedID, user.ID)
 
 	feedFollowInfo, err := s.DB.CreateFeedFollow(context.Background(), feedFollow)
 	if err != nil {
