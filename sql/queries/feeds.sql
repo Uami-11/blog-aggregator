@@ -29,3 +29,10 @@ JOIN feeds f ON f.id = inserted_feed_follows.feed_id;
 
 -- name: FindFeedURL :one
 SELECT id FROM feeds WHERE url = $1;
+
+-- name: GetFeedFollowsForUser :many
+SELECT f.name AS feed_name, u.name AS user_name FROM feed_follows ff
+JOIN users u ON u.id = ff.user_id
+JOIN feeds f ON f.id = ff.feed_id
+WHERE u.id = $1;
+

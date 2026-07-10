@@ -131,6 +131,41 @@ func (q *Queries) FindFeedURL(ctx context.Context, url string) (uuid.UUID, error
 	return id, err
 }
 
+const getFeedFollowsForUser = `-- name: GetFeedFollowsForUser :many
+SELECT f.name AS feed_name, u.name AS user_name FROM feed_follows ff
+JOIN users u ON u.id = ff.user_id
+JOIN feeds f ON f.id = ff.feed_id
+WHERE u.id = $1
+`
+
+type GetFeedFollowsForUserRow struct {
+	FeedName string
+	UserName string
+}
+
+func (q *Queries) GetFeedFollowsForUser(ctx context.Context, id uuid.UUID) ([]GetFeedFollowsForUserRow, error) {
+	rows, err := q.db.QueryContext(ctx, getFeedFollowsForUser, id)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetFeedFollowsForUserRow
+	for rows.Next() {
+		var i GetFeedFollowsForUserRow
+		if err := rows.Scan(&i.FeedName, &i.UserName); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getFeedUser = `-- name: GetFeedUser :one
 SELECT u.name FROM feeds f
 JOIN users u ON u.id = f.user_id
