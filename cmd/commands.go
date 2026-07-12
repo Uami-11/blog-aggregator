@@ -139,6 +139,33 @@ func HandlerAddFeed(s *State, comm Command) error {
 	return nil
 }
 
+func HandlerUnfollow(s *State, comm Command) error {
+	if len(comm.Args) == 0 {
+		return errors.New("follow command needs a url argument")
+	}
+
+	user, _ := s.DB.GetUser(context.Background(), s.TheConfig.CurrentUserName)
+
+	feedID, err := s.DB.FindFeedURL(context.Background(), comm.Args[0])
+	if err != nil {
+		return err
+	}
+
+	var unfollow database.UnfollowFeedParams
+
+	unfollow.FeedID = feedID
+	unfollow.UserID = user.ID
+
+	err = s.DB.UnfollowFeed(context.Background(), unfollow)
+	if err != nil {
+		return err
+	}
+
+	fmt.Println("Successfully unfollowed")
+
+	return nil
+}
+
 func HandlerFollow(s *State, comm Command) error {
 	if len(comm.Args) == 0 {
 		return errors.New("follow command needs a url argument")
