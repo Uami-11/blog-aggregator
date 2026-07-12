@@ -37,10 +37,10 @@ func main() {
 	comms.Register("reset", cmd.HandlerReset)
 	comms.Register("users", cmd.HandlerUsers)
 	comms.Register("agg", cmd.HandlerAgg)
-	comms.Register("addfeed", cmd.HandlerAddFeed)
+	comms.Register("addfeed", cmd.MiddlewareLoggedIn(cmd.HandlerAddFeed))
 	comms.Register("feeds", cmd.HandlerFeeds)
-	comms.Register("follow", cmd.HandlerFollow)
-	comms.Register("following", cmd.HandlerFollowing)
+	comms.Register("follow", cmd.MiddlewareLoggedIn(cmd.HandlerFollow))
+	comms.Register("following", cmd.MiddlewareLoggedIn(cmd.HandlerFollowing))
 
 	if len(os.Args) < 2 {
 		fmt.Println("no command given")

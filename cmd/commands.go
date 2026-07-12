@@ -88,10 +88,25 @@ func HandlerUsers(s *State, comm Command) error {
 	return nil
 }
 
+// Middleware add
+
+func MiddlewareLoggedIn(handler func(s *State, comm Command) error) func(*State, Command) error {
+	return func(s *State, comm Command) error {
+		_, err := s.DB.GetUser(context.Background(), s.TheConfig.CurrentUserName)
+		if err != nil {
+			return err
+		}
+
+		return handler(s, comm)
+	}
+}
+
 func HandlerAddFeed(s *State, comm Command) error {
 	if len(comm.Args) < 2 {
 		return errors.New("feed needs two arguments: name and url")
 	}
+
+	user, _ := s.DB.GetUser(context.Background(), s.TheConfig.CurrentUserName)
 
 	var feeds database.CreateFeedParams
 
@@ -107,14 +122,9 @@ func HandlerAddFeed(s *State, comm Command) error {
 	feeds.CreatedAt = currentTime
 	feeds.UpdatedAt = currentTime
 
-	user, err := s.DB.GetUser(context.Background(), s.TheConfig.CurrentUserName)
-	if err != nil {
-		return errors.New("you are not logged in, can not create feed")
-	}
-
 	feeds.UserID = user.ID
 
-	_, err = s.DB.CreateFeed(context.Background(), feeds)
+	_, err := s.DB.CreateFeed(context.Background(), feeds)
 	if err != nil {
 		return errors.New("error in creating feed")
 	}
@@ -124,6 +134,46 @@ func HandlerAddFeed(s *State, comm Command) error {
 	_, err = s.DB.CreateFeedFollow(context.Background(), feedFollow)
 	if err != nil {
 		return err
+	}
+
+	return nil
+}
+
+func HandlerFollow(s *State, comm Command) error {
+	if len(comm.Args) == 0 {
+		return errors.New("follow command needs a url argument")
+	}
+
+	user, _ := s.DB.GetUser(context.Background(), s.TheConfig.CurrentUserName)
+
+	feedID, err := s.DB.FindFeedURL(context.Background(), comm.Args[0])
+	if err != nil {
+		return err
+	}
+
+	feedFollow := createFeedFollow(feedID, user.ID)
+
+	feedFollowInfo, err := s.DB.CreateFeedFollow(context.Background(), feedFollow)
+	if err != nil {
+		return err
+	}
+
+	fmt.Printf("%s followed the %s feed\n", feedFollowInfo[0].UserName, feedFollowInfo[0].FeedName)
+
+	return nil
+}
+
+func HandlerFollowing(s *State, comm Command) error {
+	user, _ := s.DB.GetUser(context.Background(), s.TheConfig.CurrentUserName)
+
+	feedsFollowed, err := s.DB.GetFeedFollowsForUser(context.Background(), user.ID)
+	if err != nil {
+		return err
+	}
+
+	fmt.Printf("%s follows these feeds:\n", user.Name)
+	for _, feed := range feedsFollowed {
+		fmt.Println(feed.FeedName)
 	}
 
 	return nil
@@ -165,52 +215,6 @@ func createFeedFollow(feedID, userID uuid.UUID) database.CreateFeedFollowParams 
 	feedFollow.UserID = userID
 
 	return feedFollow
-}
-
-func HandlerFollow(s *State, comm Command) error {
-	if len(comm.Args) == 0 {
-		return errors.New("follow command needs a url argument")
-	}
-
-	feedID, err := s.DB.FindFeedURL(context.Background(), comm.Args[0])
-	if err != nil {
-		return err
-	}
-
-	user, err := s.DB.GetUser(context.Background(), s.TheConfig.CurrentUserName)
-	if err != nil {
-		return err
-	}
-
-	feedFollow := createFeedFollow(feedID, user.ID)
-
-	feedFollowInfo, err := s.DB.CreateFeedFollow(context.Background(), feedFollow)
-	if err != nil {
-		return err
-	}
-
-	fmt.Printf("%s followed the %s feed\n", feedFollowInfo[0].UserName, feedFollowInfo[0].FeedName)
-
-	return nil
-}
-
-func HandlerFollowing(s *State, comm Command) error {
-	user, err := s.DB.GetUser(context.Background(), s.TheConfig.CurrentUserName)
-	if err != nil {
-		return err
-	}
-
-	feedsFollowed, err := s.DB.GetFeedFollowsForUser(context.Background(), user.ID)
-	if err != nil {
-		return err
-	}
-
-	fmt.Printf("%s follows these feeds:\n", user.Name)
-	for _, feed := range feedsFollowed {
-		fmt.Println(feed.FeedName)
-	}
-
-	return nil
 }
 
 func HandlerRegister(s *State, comm Command) error {
