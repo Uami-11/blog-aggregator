@@ -27,6 +27,10 @@ SELECT inserted_feed_follows.*, f.name AS feed_name, u.name AS user_name FROM in
 JOIN users u ON u.id = inserted_feed_follows.user_id
 JOIN feeds f ON f.id = inserted_feed_follows.feed_id;
 
+-- name: UnfollowFeed :exec
+
+DELETE FROM feed_follows WHERE user_id = $1 AND feed_id = $2;
+
 -- name: FindFeedURL :one
 SELECT id FROM feeds WHERE url = $1;
 
