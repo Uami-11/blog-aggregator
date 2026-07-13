@@ -53,7 +53,7 @@ func HandlerReset(s *State, comm Command) error {
 	return nil
 }
 
-func ScrapeFeeds(s *State, comm Command) error {
+func ScrapeFeeds(s *State) error {
 	feed, err := s.DB.GetNextFeedToFetched(context.Background())
 	if err != nil {
 		return err
@@ -93,20 +93,27 @@ func ScrapeFeeds(s *State, comm Command) error {
 }
 
 func HandlerAgg(s *State, comm Command) error {
-	feed, err := article.FetchFeed(context.Background(), "https://www.wagslane.dev/index.xml")
+	if len(comm.Args) == 0 {
+		return errors.New("agg command needs a url argument")
+	}
+
+	timeBetweenReqs, err := time.ParseDuration(comm.Args[0])
 	if err != nil {
 		return err
 	}
 
-	fmt.Println("Title: ", feed.Channel.Title)
-	fmt.Println("Link: ", feed.Channel.Link)
-	fmt.Println("Description: ", feed.Channel.Description)
-	fmt.Println("Items:")
-	for _, item := range feed.Channel.Item {
-		fmt.Println(item)
-	}
+	fmt.Printf("Collecting feeds every %v", timeBetweenReqs)
+	ticker := time.NewTicker(timeBetweenReqs)
 
-	return nil
+	defer ticker.Stop()
+
+	for ; ; <-ticker.C {
+		err = ScrapeFeeds(s)
+		fmt.Println("Scraped, on to the next")
+		if err != nil {
+			return err
+		}
+	}
 }
 
 func HandlerUsers(s *State, comm Command) error {
