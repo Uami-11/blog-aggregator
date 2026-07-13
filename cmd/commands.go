@@ -53,6 +53,45 @@ func HandlerReset(s *State, comm Command) error {
 	return nil
 }
 
+func ScrapeFeeds(s *State, comm Command) error {
+	feed, err := s.DB.GetNextFeedToFetched(context.Background())
+	if err != nil {
+		return err
+	}
+
+	currentTime := sql.NullTime{
+		Time:  time.Now(),
+		Valid: true,
+	}
+
+	var markParams database.MarkFeedFetchedParams
+	markParams.ID = feed.ID
+	markParams.LastFetchedAt = currentTime
+
+	err = s.DB.MarkFeedFetched(context.Background(), markParams)
+	if err != nil {
+		return err
+	}
+
+	theFeed, err := article.FetchFeed(context.Background(), feed.Url)
+	if err != nil {
+		return err
+	}
+
+	fmt.Println("Title: ", theFeed.Channel.Title)
+	fmt.Println("Link: ", theFeed.Channel.Link)
+	fmt.Println("Description: ", theFeed.Channel.Description)
+	fmt.Println("Items:")
+	for _, item := range theFeed.Channel.Item {
+		fmt.Println(item.Title)
+		fmt.Println(item.Link)
+		fmt.Println("Published on: ", item.PubDate)
+		fmt.Println(item.Description)
+	}
+
+	return nil
+}
+
 func HandlerAgg(s *State, comm Command) error {
 	feed, err := article.FetchFeed(context.Background(), "https://www.wagslane.dev/index.xml")
 	if err != nil {
