@@ -16,7 +16,7 @@ const createFeed = `-- name: CreateFeed :one
 INSERT INTO feeds (id, name, url, created_at, updated_at, user_id)
     VALUES ($1, $2, $3, $4, $5, $6)
 RETURNING
-    id, name, url, created_at, updated_at, user_id
+    id, name, url, created_at, updated_at, user_id, last_fetched_at
 `
 
 type CreateFeedParams struct {
@@ -45,6 +45,7 @@ func (q *Queries) CreateFeed(ctx context.Context, arg CreateFeedParams) (Feed, e
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.UserID,
+		&i.LastFetchedAt,
 	)
 	return i, err
 }
@@ -210,6 +211,22 @@ func (q *Queries) GetFeeds(ctx context.Context) ([]GetFeedsRow, error) {
 		return nil, err
 	}
 	return items, nil
+}
+
+const markFeedFetched = `-- name: MarkFeedFetched :exec
+UPDATE feeds
+SET last_fetched_at = $1, updated_at = $1
+WHERE id = $2
+`
+
+type MarkFeedFetchedParams struct {
+	LastFetchedAt sql.NullTime
+	ID            uuid.UUID
+}
+
+func (q *Queries) MarkFeedFetched(ctx context.Context, arg MarkFeedFetchedParams) error {
+	_, err := q.db.ExecContext(ctx, markFeedFetched, arg.LastFetchedAt, arg.ID)
+	return err
 }
 
 const unfollowFeed = `-- name: UnfollowFeed :exec
