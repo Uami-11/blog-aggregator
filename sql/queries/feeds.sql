@@ -46,4 +46,4 @@ SET last_fetched_at = $1, updated_at = $1
 WHERE id = $2;
 
 -- name: GetNextFeedToFetched :one
-SELECT id, url FROM feeds ORDER BY last_fetched_at;
+SELECT id, url FROM feeds ORDER BY last_fetched_at NULLS FIRST;

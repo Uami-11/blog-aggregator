@@ -214,7 +214,7 @@ func (q *Queries) GetFeeds(ctx context.Context) ([]GetFeedsRow, error) {
 }
 
 const getNextFeedToFetched = `-- name: GetNextFeedToFetched :one
-SELECT id, url FROM feeds ORDER BY last_fetched_at
+SELECT id, url FROM feeds ORDER BY last_fetched_at NULLS FIRST
 `
 
 type GetNextFeedToFetchedRow struct {
