@@ -6,6 +6,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/Uami-11/blog-aggregator/article"
@@ -53,6 +54,40 @@ func HandlerReset(s *State, comm Command) error {
 	return nil
 }
 
+func HandlerBrowse(s *State, comm Command) error {
+	var limit int32
+
+	if len(comm.Args) != 0 {
+		limitInt, err := strconv.Atoi(comm.Args[0])
+		if err != nil {
+			return err
+		}
+		limit = int32(limitInt)
+	} else {
+		limit = 2
+	}
+
+	var param database.GetPostsForUserParams
+
+	user, _ := s.DB.GetUser(context.Background(), s.TheConfig.CurrentUserName)
+
+	param.ID = user.ID
+
+	param.Limit = limit
+	posts, err := s.DB.GetPostsForUser(context.Background(), param)
+	if err != nil {
+		return err
+	}
+
+	for _, post := range posts {
+		fmt.Printf("Title: %s\n", post.Title)
+		fmt.Printf("Link: %s\n", post.Url)
+		fmt.Printf("Description:\n%s\n", post.Description)
+	}
+
+	return nil
+}
+
 func ScrapeFeeds(s *State) error {
 	feed, err := s.DB.GetNextFeedToFetched(context.Background())
 	if err != nil {
@@ -83,7 +118,6 @@ func ScrapeFeeds(s *State) error {
 	fmt.Println("Title: ", theFeed.Channel.Title)
 	fmt.Println("Link: ", theFeed.Channel.Link)
 	fmt.Println("Description: ", theFeed.Channel.Description)
-	fmt.Println("Items:")
 	for _, item := range theFeed.Channel.Item {
 		postParams.Title = item.Title
 		postParams.Url = item.Link
@@ -119,7 +153,7 @@ func ScrapeFeeds(s *State) error {
 
 func HandlerAgg(s *State, comm Command) error {
 	if len(comm.Args) == 0 {
-		return errors.New("agg command needs a url argument")
+		return errors.New("agg command needs a time argument")
 	}
 
 	timeBetweenReqs, err := time.ParseDuration(comm.Args[0])

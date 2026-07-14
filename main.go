@@ -42,6 +42,7 @@ func main() {
 	comms.Register("follow", cmd.MiddlewareLoggedIn(cmd.HandlerFollow))
 	comms.Register("following", cmd.MiddlewareLoggedIn(cmd.HandlerFollowing))
 	comms.Register("unfollow", cmd.MiddlewareLoggedIn(cmd.HandlerUnfollow))
+	comms.Register("browse", cmd.MiddlewareLoggedIn(cmd.HandlerBrowse))
 
 	if len(os.Args) < 2 {
 		fmt.Println("no command given")
