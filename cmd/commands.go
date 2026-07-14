@@ -78,15 +78,40 @@ func ScrapeFeeds(s *State) error {
 		return err
 	}
 
+	var postParams database.CreatePostParams
+
 	fmt.Println("Title: ", theFeed.Channel.Title)
 	fmt.Println("Link: ", theFeed.Channel.Link)
 	fmt.Println("Description: ", theFeed.Channel.Description)
 	fmt.Println("Items:")
 	for _, item := range theFeed.Channel.Item {
-		fmt.Println(item.Title)
-		fmt.Println(item.Link)
-		fmt.Println("Published on: ", item.PubDate)
-		fmt.Println(item.Description)
+		postParams.Title = item.Title
+		postParams.Url = item.Link
+		postParams.Description = item.Description
+		pubTime, err := time.Parse(time.RFC1123, item.PubDate)
+		if err != nil {
+			return err
+		}
+		postParams.PublishedAt = sql.NullTime{
+			Time:  pubTime,
+			Valid: true,
+		}
+
+	}
+
+	currentTime = sql.NullTime{
+		Time:  time.Now(),
+		Valid: true,
+	}
+
+	postParams.ID = uuid.New()
+	postParams.CreatedAt = currentTime
+	postParams.UpdatedAt = currentTime
+	postParams.FeedID = feed.ID
+
+	_, err = s.DB.CreatePost(context.Background(), postParams)
+	if err != nil {
+		return err
 	}
 
 	return nil
